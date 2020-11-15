@@ -1,0 +1,233 @@
+<html>
+   <head>
+      <title>Course Work 1</title>
+      <script src="https://unpkg.com/vue"></script>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+      <link rel="stylesheet" href="stylesheet.css">
+      <script src="products.js"></script>
+   </head>
+   <body>
+      <div class="bg" id="app">
+         <header>
+            <h1 v-text="sitename" id="Title"></h1>
+         </header>
+         <main>
+            <div v-if = 'showProduct' id="sorting">
+               <button  class="btn btn-primary":disabled="cartFilled" v-on:click = 'showCheckout' id="checkoutBtn">{{cartItemCount}} 
+                  <span class="fa fa-cart-plus"> </span> Checkout 
+                  </button>
+               <h3>Price</h3>
+               <button class="btn btn-primary" @click="sortLowest">&#x2191</button>
+               <button class="btn btn-primary" @click="sortHighest">&#x2193</button>
+               <br>
+               <h3>Subject</h3>
+               <button class="btn btn-primary" @click="sortSubjectAsc">&#x2191</button>
+               <button class="btn btn-primary" @click="sortSubjectDes">&#x2193</button>
+               <br>
+               <h3>Location</h3>
+               <button class="btn btn-primary" @click="sortLocatioAsc">&#x2191</button>
+               <button class="btn btn-primary" @click="sortLocationDes">&#x2193</button>
+               <br>
+               <h3>Spaces</h3>
+               <button class="btn btn-primary" @click="sortLowestSpace">&#x2191</button>
+               <button class="btn btn-primary" @click="sortHighestSpace">&#x2193</button>
+            </div>
+
+            <div v-if = 'showProduct'>
+               <div class="product_holder" v-for="product in products ">
+                         <h2 v-text="product.title"></h2>
+                         <figure>
+                             <img id="imageSize" v-bind:src="product.image">
+                         </figure>
+                         <p v-html="product.description"></p>
+                         <p>Price: {{product.price}}</p>
+                         <p>Available stock: {{product.availableInventory}}</p>
+                         
+
+
+                    <button class="btn btn-primary" v-on:click='addToCart(product); addToCheckOutCart(product); product.slots -=1' v-if='canAddToCart(product)'>Add to cart</button>
+
+                    <button disabled="disabled" v-else>Add to cart</button>
+
+                    <span v-if='product.availableInventory === cartCount(product.id)'>All out!</span>
+                    <span v-else-if="product.availableInventory - cartCount(product.id) < 5">
+                        Only {{product.availableInventory - cartCount(product.id)}} left!
+                    </span>
+                    <span v-else>Buy now!</span>
+               </div>        
+               
+            </div>
+            <div v-else = 'showCheckout'>
+               <h1>Checkout</h1>
+               <button class="btn btn-primary" v-on:click = 'showCheckout' id="checkoutBtn">{{cartItemCount}} 
+                  <span class="fa fa-cart-plus"> </span> Go back 
+                  </button>
+            <form id="checkoutForm">
+               <p>
+                  <strong>First Name: </strong>
+                  <input
+                  type="text"
+                  v-model="order.firstName"
+                  @keypress="isLetter($event)"
+                  >
+              </p>
+
+              <p>
+               <strong>Last Name: </strong>
+               <input
+                  type="text"
+                  v-model="order.lastName"
+                  @keypress="isLetter($event)"
+                  >
+             </p>
+
+              <p>
+               <strong>Phone Number: </strong>
+               <input type="number" input v-model="order.phoneNumber"/>
+             </p>
+            </form>
+            <div id="orderForm">
+              <h2>Order Information</h2>
+                <p>First Name:{{order.firstName}}</p>
+                <p>Last Name:{{order.lastName}}</p>
+                <p>Phone Number:{{order.phoneNumber}}
+                   <br>
+                  <button class="btn btn-primary" :disabled="formFilled"  v-on:click="submitForm">Place Order</button> 
+                </p>
+            </div>
+            <br>
+            <br>
+                <ul id="orderItems">
+                  <div v-for="(products, index) in checkOutCart" class="item_holder">
+                     <img id="imageSize" v-bind:src="products.image">
+                    Subject: {{ products.title }}
+                    <br>
+                    Location: {{ products.description }}
+                    <br>
+                    Price: {{ products.price }}
+                    <button class="btn btn-primary" v-on:click='removeCart(index)'>Remove Item</button>
+                  </div>
+                </ul>
+
+           
+            </div>
+         </main>
+      </div>
+      <script type="text/javascript">
+         var webstore = new Vue({
+             el: '#app',
+             data: {
+                 showProduct: true,
+                 sitename: 'After School Club',
+                 order: {
+                     firstName: "",
+                     lastName: "",
+                     phoneNumber: "",
+                 },
+                 products: products,
+
+                 cart: [], 
+
+                 checkOutCart: [],
+
+             },
+             methods:{
+                  addToCart(product) {
+                    this.cart.push(product.id);                   
+                    this.products.slots = - 1; 
+                     
+                 },
+
+                 addToCheckOutCart(product) {
+                    this.checkOutCart.push(product);
+                     
+                 },
+
+                 removeCart: function(index){
+                    this.cart.splice(index, 1);
+                    this.checkOutCart.splice(index, 1);
+                 },
+
+                 
+                 showCheckout: function() {
+                     this.showProduct = this.showProduct ? false: true;
+                 },
+
+                 submitForm(){
+                    alert('order has been placed')
+                },
+                canAddToCart(product) {
+                    return product.availableInventory > this.cartCount(product.id);
+                },
+                cartCount(id) {
+                    let count = 0;
+                    for (let i = 0; i < this.cart.length; i++) {
+                        if (this.cart[i] === id) {
+                            count++;
+                        }
+                    }
+                    return count;
+                },
+
+                sortLowest(){
+                  this.products.sort((a,b) => a.price > b.price ? 1 : -1);
+                },
+                sortHighest(){
+                  this.products.sort((a,b) => a.price < b.price ? 1 : -1);
+                },
+                sortLowestSpace(){
+                  this.products.sort((a,b) => a.slots > b.slots ? 1 : -1);
+                },
+                sortHighestSpace(){
+                  this.products.sort((a,b) => a.slots < b.slots ? 1 : -1);
+                },
+                sortSubjectAsc(){
+                  console.log(this.products);
+                  this.products.sort(function (a, b) {
+                     if(a.title < b.title) {return -1;}
+                     if(a.title > b.title) {return 1;}
+                     return 0
+                  }); 
+                },
+                sortSubjectDes(){
+                  this.products.sort((a,b) => a.title > b.title ? -1 : 1);
+                  return 0
+                },
+                sortLocatioAsc(){
+                  this.products.sort((a,b) => a.description < b.description ? -1 : 1)
+                  return 0;
+                },
+                sortLocationDes(){
+                  this.products.sort((a,b) => a.description > b.description ? -1 : 1)
+                  return 0;
+                },
+
+
+               isLetter(e) {
+                  let char = String.fromCharCode(e.keyCode);
+                  if (/^[A-Za-z]+$/.test(char)) return true;
+                  else e.preventDefault();
+    },              
+         
+             },
+             
+             computed:{
+                 cartItemCount: function(){
+                     return this.cart.length || '';
+                 },
+                 formFilled: function(){
+                     return this.order.firstName && this.order.lastName && this.order.phoneNumber === '';
+                 },
+                 cartFilled: function(){
+                     return this.cartItemCount == 0;
+                 },
+             },
+                  firstNameValid() {
+                     return /^[A-Za-z]+$/.test(this.firstName);
+    }
+         });
+      </script>
+   </body>
+</html>
